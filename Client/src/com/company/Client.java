@@ -5,11 +5,6 @@ import java.util.Random;
 
 public class Client {
 
-    private static Socket clientSocket;
-    private static BufferedReader in;       // Socket read stream
-    private static BufferedWriter out;      // Socket write stream
-
-
     public static void init_client() {
         try {
             try {
@@ -17,23 +12,31 @@ public class Client {
 
                 // Read income connection
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
                 // Write to income connection
                 out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+                String command = in.readLine();
 
-                // Message - water indications
-                String message = make_water_message();
+                String water_indication = new String();
+                if(command.equals(command_from_server[0])) {
+                    water_indication = Float.toString(get_cold_water_indication());
+                }
+
+                else if(command.equals(command_from_server[1])) {
+                    water_indication = Float.toString(get_hot_water_indication());
+                }
+
+                else if(command.equals(command_from_server[2])) {
+                    water_indication = get_water_indications();
+                }
 
                 // Send message to server
-                out.write(message);
+                out.write(water_indication);
                 out.newLine();
                 out.flush();
 
-                // Waiting server answer
-                String serverAnswer = in.readLine();
-                System.out.println(serverAnswer);
             } finally {
                 // Closing socket
-                System.out.println("Client was closed");
                 clientSocket.close();
                 in.close();
                 out.close();
@@ -43,21 +46,38 @@ public class Client {
         }
     }
 
-    public static int get_cold_water_indication() {
-        final Random random = new Random();
-        return random.nextInt(100000);
+
+    public static float get_cold_water_indication() {
+        final Random randomizer = new Random();
+        int min = 0;
+        int max = 100000;
+        return min + randomizer.nextFloat() * (max - min);
     }
 
-    public static int get_hot_water_indication() {
-        final Random random = new Random();
-        return random.nextInt(20000);
+    public static float get_hot_water_indication() {
+        final Random randomizer = new Random();
+        int min = 0;
+        int max = 20000;
+        return min + randomizer.nextFloat() * (max - min);
     }
 
-    public static String make_water_message() {
+    public static String get_water_indications() {
         return new String(
                 String.valueOf(get_cold_water_indication())
                 + " | "
                 + String.valueOf(get_hot_water_indication())
         );
     }
+
+    // Members
+    private static Socket clientSocket;
+    private static BufferedReader in;       // Socket read stream
+    private static BufferedWriter out;      // Socket write stream
+
+    private static String[] command_from_server =
+            {
+                    "rcw", // Recieve cold water
+                    "rhw", // Recieve hot water
+                    "rwi"  // Recieve water indications
+            };
 }
